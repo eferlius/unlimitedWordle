@@ -56,8 +56,19 @@ def lettersNotInWord(tw, cw):
             notPresentLetters.append(l)
     return notPresentLetters
 
+def askQuestion(question, arrayOfPossibleAnswers, caseSensitive = False, showOptions = True, answerInArray = False):
+    idx = -1
+    while idx < 0 and answerInArray == True:
+        answer = input(question + '\nopt: '+str(arrayOfPossibleAnswers)+': ')
+        if not caseSensitive: # put everything in lowercase
+            arrayOfPossibleAnswers = [x.lower() for x in arrayOfPossibleAnswers]
+            answer = answer.lower()
+        try:
+            idx = arrayOfPossibleAnswers.index(answer)
+        except:
+            idx = -1
 
-
+    return idx
 
 
 # load the possible words
@@ -98,7 +109,6 @@ while play == True:
 
         lettersToEliminate = lettersNotInWord(tryWord, correctWord)
 
-
         for l in lettersToEliminate:
             try:
                 possibleLetters.remove(l)
@@ -126,8 +136,9 @@ while play == True:
         plt.draw()
     print(correctWord)
 
-    answer = input('Play again? [y/n] ')
-    if answer.lower() == 'y':
+
+    answer = askQuestion('Play again? ', ['y','n'])
+    if answer == 0:
         play = True
         # clear all the eaxes
         for i in range(6):
