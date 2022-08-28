@@ -8,8 +8,7 @@ Created on Thu Aug 25 08:23:52 2022
 import random
 import string
 import matplotlib.pyplot as plt
-import cv2
-import time
+import os
 
 def loadList(filename):
     return open(filename).read().splitlines()
@@ -18,23 +17,38 @@ def replaceCharAtIndex(s, position, character):
     return s[:position] + character + s[position+1:]
 
 def compareWords(cw, tw):
-    # cw = correct word
-    # tw = try word
+    '''
+    Compares two words of 5 letters, outputs a string of:
+        - x: the letter in try word is not present in correct word
+        - ?: the letter in try word is present in correct word but in another position
+        - !: the letter in try word is present in correct word in the same position
+
+
+    Parameters
+    ----------
+    cw : string
+        correct word.
+    tw : string
+        try word.
+
+    Returns
+    -------
+    stringResult : string
+        contains x?! to indicate the correctness of each letter.
+
+    '''
     listResult = list('xxxxx')
 
     cwcopy = cw
     twcopy = tw
-
-    # check green letters
+    # check green letters (same letter in correct position)
     for i in range(5):
         if cw[i] == tw[i]:
             listResult[i] = '!'
             # to be sure they're different
             twcopy = replaceCharAtIndex(twcopy, i, '_')
             cwcopy = replaceCharAtIndex(cwcopy, i, '^')
-        # print(twcopy)
-        # print(cwcopy)
-    # check yellow letters in the whole word
+    # check yellow letters (same letter in wrong position)
     for i in range(5):
         if listResult[i] != '!': # if not already checked letter
             if twcopy[i] in cwcopy:
@@ -42,38 +56,93 @@ def compareWords(cw, tw):
                 cwcopy = replaceCharAtIndex(cwcopy, cwcopy.index(twcopy[i]), '*')
                 twcopy = replaceCharAtIndex(twcopy, i,'*')
 
-        # print(twcopy)
-        # print(cwcopy)
-
     stringResult = "".join(listResult)
 
     return stringResult
 
 def lettersNotInWord(tw, cw):
+    '''
+    Compares try word and correct word, outputs a list containing all the letters in try word not contained in correct word
+    
+
+    Parameters
+    ----------
+    cw : string
+        correct word.
+    tw : string
+        try word.
+
+    Returns
+    -------
+    notPresentLetters : list
+        containing all the letters in try word not contained in correct word.
+
+    '''
     notPresentLetters = []
     for l in tw:
         if l not in cw:
             notPresentLetters.append(l)
     return notPresentLetters
 
-def askQuestion(question, arrayOfPossibleAnswers, caseSensitive = False, showOptions = True, answerInArray = False):
-    idx = -1
-    while idx < 0 and answerInArray == True:
-        answer = input(question + '\nopt: '+str(arrayOfPossibleAnswers)+': ')
+def askQuestion(question, listOfPossibleAnswers, caseSensitive = False, showOptions = True, answerInArray = False):
+    '''
+    Ask a question with the possible answers, outputs the integer corresponding to the given answer
+
+    Parameters
+    ----------
+    question : string
+        DESCRIPTION.
+    listOfPossibleAnswers : list
+        DESCRIPTION.
+    caseSensitive : bool, optional
+        DESCRIPTION. The default is False.
+    showOptions : bool, optional
+        DESCRIPTION. The default is True.
+    answerInArray : bool, optional
+        If True, if the user's answer is not in the possible list, asks again the question.
+        If False, if the user's answer is not in the possible list, outputs -1. 
+        The default is False.
+
+    Returns
+    -------
+    idx : int
+        corresponds to the answer in the list.
+
+    '''
+    idx = len(listOfPossibleAnswers)+1
+    while idx > len(listOfPossibleAnswers):
+        answer = input(question + '\nopt: '+str(listOfPossibleAnswers)+': ')
         if not caseSensitive: # put everything in lowercase
-            arrayOfPossibleAnswers = [x.lower() for x in arrayOfPossibleAnswers]
+            listOfPossibleAnswers = [x.lower() for x in listOfPossibleAnswers]
             answer = answer.lower()
         try:
-            idx = arrayOfPossibleAnswers.index(answer)
+            idx = listOfPossibleAnswers.index(answer)
         except:
-            idx = -1
+            if answerInArray:
+                print('not valid answer')
+                len(listOfPossibleAnswers)+1
+            if not answerInArray:
+                idx = -1
+
 
     return idx
 
+def askQuestionYN(question, answerInArray = False):
+    answer = askQuestion(question, ['y','n'], caseSensitive = False, showOptions = True, answerInArray = answerInArray)
+    if answer == 0:
+        return True
+    else:
+        return False
 
+
+
+POSSIBLE_WORDS_PATH = r'valid-wordle-words.txt'
+SAVE_IMAGES_PATH = r'playedGames'
+
+
+os.makedirs(SAVE_IMAGES_PATH, exist_ok = True)
 # load the possible words
-possibleWordsPath = r'valid-wordle-words.txt'
-possibleWords = loadList(possibleWordsPath)
+possibleWords = loadList(POSSIBLE_WORDS_PATH)
 
 plt.close('all')
 fig, ax = plt.subplots(6,1)
@@ -135,17 +204,26 @@ while play == True:
         plt.show()
         plt.draw()
     print(correctWord)
+    ax[0].set_title(correctWord)
+
+    plt.pause(0.01)
+    plt.show()
+    plt.draw()
+
+    if tryWord != correctWord:
+        attemptCounter = 'X'
+
+    save = askQuestionYN('Save figure?')
+    if save:
+        plt.savefig(os.path.join(SAVE_IMAGES_PATH,correctWord+str(attemptCounter)+'.png'))
 
 
-    answer = askQuestion('Play again? ', ['y','n'])
-    if answer == 0:
-        play = True
-        # clear all the eaxes
+    play = askQuestionYN('Play again?')
+    if play:
+        # clear all the axes
         for i in range(6):
             ax[i].clear()
 
         plt.pause(0.01)
         plt.show()
         plt.draw()
-    else:
-        play = False
