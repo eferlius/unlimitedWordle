@@ -37,7 +37,8 @@ def compareWords(cw, tw):
         contains x?! to indicate the correctness of each letter.
 
     '''
-    listResult = list('xxxxx')
+    assert len(cw) == len(tw), "cannot compare words of different length"
+    listResult =list('x'*len(cw))
 
     cwcopy = cw
     twcopy = tw
@@ -148,6 +149,9 @@ plt.close('all')
 fig, ax = plt.subplots(6,1)
 plt.ion()
 plt.suptitle('unlimited wordle')
+plt.pause(0.01)
+plt.show()
+plt.draw()
 
 
 play = True
